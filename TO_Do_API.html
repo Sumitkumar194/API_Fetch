@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Demo: Todos</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .todo {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+      }
+      button {
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Todo List (JSONPlaceholder API)</h1>
+    <div>
+      <input type="text" id="todoInput" placeholder="Enter new todo" />
+      <button onclick="addTodo()">Add Todo</button>
+    </div>
+    <div id="todoList"></div>
+
+    <script>
+      const API_URL = "https://jsonplaceholder.typicode.com/todos";
+
+      // Fetch and display all todos (GET)
+      async function fetchTodos() {
+        const response = await fetch(`${API_URL}`); // Limit to 5 todos
+        const todos = await response.json();
+
+        const todoList = document.getElementById("todoList");
+        todoList.innerHTML = ""; // Clear previous content
+        todos.forEach((todo) => {
+          todoList.innerHTML += `
+          <div class="todo">
+            <span>${todo.title} (${todo.completed ? "Done" : "Pending"})</span>
+            <button onclick="updateTodo(${todo.id})">Update</button>
+            <button onclick="patchTodo(${todo.id})">Mark as Done</button>
+            <button onclick="deleteTodo(${todo.id})">Delete</button>
+          </div>
+        `;
+        });
+      }
+
+      // Add a new todo (POST)
+      async function addTodo() {
+        const todoInput = document.getElementById("todoInput");
+        const title = todoInput.value;
+
+        if (!title) {
+          alert("Please enter a todo!");
+          return;
+        }
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: title,
+            completed: false,
+          }),
+        });
+
+        const newTodo = await response.json();
+        console.log("New Todo Added:", newTodo);
+
+        todoInput.value = ""; // Clear the input field
+        fetchTodos(); // Refresh the list
+      }
+
+      // Update a todo (PUT)
+      async function updateTodo(id) {
+        const updatedTitle = prompt("Enter the new title for the todo:");
+        if (!updatedTitle) {
+          alert("Please enter a valid title!");
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: updatedTitle,
+            completed: true, // Mark it as completed
+          }),
+        });
+
+        const updatedTodo = await response.json();
+        console.log("Todo Updated:", updatedTodo);
+
+        fetchTodos(); // Refresh the list
+      }
+
+      // Partially update a todo (PATCH)
+      async function patchTodo(id) {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            completed: true, // Mark the todo as completed
+          }),
+        });
+
+        const patchedTodo = await response.json();
+        console.log("Todo Patched:", patchedTodo);
+
+        fetchTodos(); // Refresh the list
+      }
+
+      // Delete a todo (DELETE)
+      async function deleteTodo(id) {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          console.log(`Todo with ID ${id} deleted successfully.`);
+          fetchTodos(); // Refresh the list
+        } else {
+          console.error("Failed to delete the todo.");
+        }
+      }
+
+      // Fetch and display todos on page load
+      fetchTodos();
+    </script>
+  </body>
+</html>
